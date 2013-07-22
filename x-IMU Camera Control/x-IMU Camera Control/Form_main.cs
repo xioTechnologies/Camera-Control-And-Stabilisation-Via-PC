@@ -6,17 +6,16 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using System.Reflection;
 
-namespace x_IMU_Camera_Control_via_PC
+namespace x_IMU_Camera_Control
 {
     public partial class Form_main : Form
     {
-        #region Variables
-
         /// <summary>
         /// x-IMU serial object used to commutate to the x-IMU via USB or Bluetooth.
         /// </summary>
-        private xIMU_API.xIMUserial xIMUserial;
+        private x_IMU_API.xIMUserial xIMUserial;
 
         /// <summary>
         /// GimbalSerial object to control gimbal via Pololu servo controller
@@ -28,50 +27,38 @@ namespace x_IMU_Camera_Control_via_PC
         /// </summary>
         private System.Windows.Forms.Timer formUpdateTimer;
 
-        #endregion
-
         public Form_main()
         {
             InitializeComponent();
         }
 
-        #region Form load/close and form update timer
-
         /// <summary>
         /// Form load event to create objects and set default form values
         /// </summary>
-        private void Form1_Load(object sender, EventArgs e)
+        private void Form_main_Load(object sender, EventArgs e)
         {
-            #region Create x-IMU and gimbal serial objects
+            this.Text = Assembly.GetExecutingAssembly().GetName().Name + " " + Assembly.GetExecutingAssembly().GetName().Version.Major.ToString() + "." + Assembly.GetExecutingAssembly().GetName().Version.Minor.ToString();
 
-            xIMUserial = new xIMU_API.xIMUserial();
-            xIMUserial.QuaternionDataReceived += new xIMU_API.xIMUserial.onQuaternionDataReceived(xIMUserial_QuaternionDataReceived);
-
+            // Create x-IMU and gimbal serial objects
+            xIMUserial = new x_IMU_API.xIMUserial();
+            xIMUserial.QuaternionDataReceived += new x_IMU_API.xIMUserial.onQuaternionDataReceived(xIMUserial_QuaternionDataReceived);
             gimbalSerial = new GimbalSerial();
 
-            #endregion
-
-            #region Set default form control values
-
+            // Get ports names
             refreshXIMUportList();
             refreshPololuPortList();
 
-            #endregion
-
-            #region Create and start form update timer
-
+            // Create and start form update timer
             formUpdateTimer = new System.Windows.Forms.Timer();
             formUpdateTimer.Interval = 50;
             formUpdateTimer.Tick += new EventHandler(formUpdateTimer_Tick);
             formUpdateTimer.Start();
-
-            #endregion
         }
 
         /// <summary>
         /// Form close event to close serial ports.
         /// </summary>
-        private void Form1_FormClosed(object sender, FormClosedEventArgs e)
+        private void Form_main_FormClosed(object sender, FormClosedEventArgs e)
         {
             xIMUserial.Close();
             gimbalSerial.Close();
@@ -82,13 +69,12 @@ namespace x_IMU_Camera_Control_via_PC
         /// </summary>
         private void formUpdateTimer_Tick(object sender, EventArgs e)
         {
-            textBox_QuaternionPacketsReceived.Text = Convert.ToString(xIMUserial.PacketCounter.QuaternionDataPacketsReceived);
+            textBox_QuaternionPacketsReceived.Text = Convert.ToString(xIMUserial.PacketCounter.QuaternionPacketsRead);
         }
 
-        #endregion
-
-        #region x-IMU Port
-
+        /// <summary>
+        /// Button click event to open x-IMU serial port
+        /// </summary>
         private void button_openXIMUport_Click(object sender, EventArgs e)
         {
             if (button_openXIMUport.Text == "Open Port")
@@ -107,7 +93,7 @@ namespace x_IMU_Camera_Control_via_PC
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message, "Error");
+                    MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     button_openXIMUport.Text = "Open Port";
                     comboBox_xIMUportName.Enabled = true;
                     button_refreshXIMUportList.Enabled = true;
@@ -124,7 +110,7 @@ namespace x_IMU_Camera_Control_via_PC
         }
 
         /// <summary>
-        /// ...
+        /// Button click event to refresh potential x-IMU serial port names
         /// </summary>
         private void button_refreshXIMUlist_Click(object sender, EventArgs e)
         {
@@ -132,11 +118,11 @@ namespace x_IMU_Camera_Control_via_PC
         }
 
         /// <summary>
-        /// Adds available port names to the port name combo box and selects the last in the list.
+        /// Adds available port names to the port name ComboBox and selects the last in the list.
         /// </summary>
         private void refreshXIMUportList()
         {
-            string[] aviablePorts = xIMU_API.xIMUserial.GetPortNames();
+            string[] aviablePorts = x_IMU_API.xIMUserial.GetPortNames();
             comboBox_xIMUportName.Items.Clear();
             for (int i = 0; i < aviablePorts.Length; i++)
             {
@@ -145,10 +131,9 @@ namespace x_IMU_Camera_Control_via_PC
             comboBox_xIMUportName.SelectedIndex = comboBox_xIMUportName.Items.Count - 1;
         }
 
-        #endregion
-
-        #region Gimbal Port
-
+        /// <summary>
+        /// Button click event to open gimbal serial port
+        /// </summary>
         private void button_openGimbalPort_Click(object sender, EventArgs e)
         {
             if (button_openGimbalPort.Text == "Open Port")
@@ -167,7 +152,7 @@ namespace x_IMU_Camera_Control_via_PC
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message, "Error");
+                    MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     button_openGimbalPort.Text = "Open Port";
                     comboBox_gimbalPortName.Enabled = true;
                     button_refreshGimbalPortList.Enabled = true;
@@ -183,6 +168,9 @@ namespace x_IMU_Camera_Control_via_PC
             }
         }
 
+        /// <summary>
+        /// Button click event to refresh potential gimbal serial port names
+        /// </summary>
         private void button_refreshGimbalPortList_Click(object sender, EventArgs e)
         {
             refreshPololuPortList();
@@ -202,27 +190,23 @@ namespace x_IMU_Camera_Control_via_PC
             comboBox_gimbalPortName.SelectedIndex = comboBox_gimbalPortName.Items.Count - 1;
         }
 
-        #endregion
-
-        #region x-IMU data received event and send command
-
         /// <summary>
         /// Quaternion data received event to set servo angles of gimbal.
         /// </summary>
-        void xIMUserial_QuaternionDataReceived(object sender, xIMU_API.QuaternionData e)
+        void xIMUserial_QuaternionDataReceived(object sender, x_IMU_API.QuaternionData e)
         {
-            xIMU_API.QuaternionData quat;
+            x_IMU_API.QuaternionData quaternionData;
             if (radioButton_controlMode.Checked)
             {
-                quat = e;
+                quaternionData = e;
             }
             else
             {
-                quat = e.ConvertToConjugate();
+                quaternionData = e.ConvertToConjugate();
             }
             try
             {
-                float[] EulerAngles = quat.ConvertToEulerAngles();
+                float[] EulerAngles = quaternionData.ConvertToEulerAngles();
                 gimbalSerial.SetTilt(EulerAngles[0]);
                 gimbalSerial.SetRoll(EulerAngles[1]);
                 gimbalSerial.SetPan(EulerAngles[2]);
@@ -237,10 +221,8 @@ namespace x_IMU_Camera_Control_via_PC
         {
             if (xIMUserial.IsOpen)
             {
-                xIMUserial.SendCommandPacket(xIMU_API.CommandCodes.Tare);
+                xIMUserial.SendCommandPacket(x_IMU_API.CommandCodes.AlgorithmTare);
             }
         }
-
-        #endregion
     }
 }

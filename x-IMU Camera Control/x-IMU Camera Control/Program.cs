@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 
-namespace x_IMU_Camera_Control_via_PC
+namespace x_IMU_Camera_Control
 {
     static class Program
     {

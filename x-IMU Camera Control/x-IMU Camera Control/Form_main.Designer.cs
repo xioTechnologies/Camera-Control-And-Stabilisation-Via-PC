@@ -1,4 +1,4 @@
-﻿namespace x_IMU_Camera_Control_via_PC
+﻿namespace x_IMU_Camera_Control
 {
     partial class Form_main
     {
@@ -230,9 +230,9 @@
             this.Controls.Add(this.groupBox_gimbalPort);
             this.Controls.Add(this.groupBox_xIMUport);
             this.Name = "Form_main";
-            this.Text = "x-IMU Camera Control";
-            this.Load += new System.EventHandler(this.Form1_Load);
-            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Form1_FormClosed);
+            this.Text = "Form_main";
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Form_main_FormClosed);
+            this.Load += new System.EventHandler(this.Form_main_Load);
             this.groupBox_xIMUport.ResumeLayout(false);
             this.groupBox_xIMUport.PerformLayout();
             this.groupBox_gimbalPort.ResumeLayout(false);

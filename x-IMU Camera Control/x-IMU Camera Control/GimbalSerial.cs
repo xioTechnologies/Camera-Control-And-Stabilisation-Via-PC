@@ -4,21 +4,22 @@ using System.Linq;
 using System.Text;
 using System.IO.Ports;
 
-namespace x_IMU_Camera_Control_via_PC
+namespace x_IMU_Camera_Control
 {
     /// <summary>
     /// GimbalSerial class.
     /// </summary>
     class GimbalSerial
     {
-        #region Variables
-
+        /// <summary>
+        /// Serial port object to compunicate with Pololu Maestro Servo Controller
+        /// </summary>
         private SerialPort serialPort;
+
+        /// <summary>
+        /// Serial port name of Pololu Maestro Servo Controller
+        /// </summary>
         private string portName;
-
-        #endregion
-
-        #region Properties
 
         /// <summary>
         /// Gets or sets the name of the serial port.
@@ -40,7 +41,7 @@ namespace x_IMU_Camera_Control_via_PC
         }
 
         /// <summary>
-        /// Gets a value indicated the open or closed value of the serial port.
+        /// Gets a value indicating the open or closed status of the serial port.
         /// </summary>
         /// <value>
         /// Open state bool.
@@ -53,12 +54,8 @@ namespace x_IMU_Camera_Control_via_PC
             }
         }
 
-        #endregion
-
-        #region Constructors
-
         /// <summary>
-        /// Initializes a new instance of the <see cref="T:GimbalSerial"/> class.
+        /// Initializes a new instance of the <see cref="GimbalSerial"/> class.
         /// </summary>
         public GimbalSerial()
             : this("COM1")
@@ -66,18 +63,32 @@ namespace x_IMU_Camera_Control_via_PC
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="T:GimbalSerial"/> class.
+        /// Initializes a new instance of the <see cref="GimbalSerial"/> class.
         /// </summary>
-        /// <param name="ComPort">Name of the port the Gimbal servo driver appears as (for example, COM1).
+        /// <param name="ComPort">
+        /// Port name asigned to the Pololu Maestro Servo Controller (for example, COM1).
         /// </param>
         public GimbalSerial(string portName)
         {
             serialPort = new SerialPort(portName, 9600, Parity.None, 8, StopBits.One);
         }
 
-        #endregion
-
-        #region Methods
+        /// <summary>
+        /// Gets an array of serial port names for the current computer. Invalid characters are removed.
+        /// </summary>
+        public static string[] GetPortNames()
+        {
+            string[] portNames = SerialPort.GetPortNames();
+            for (int i = 0; i < portNames.Length; i++)
+            {
+                portNames[i] = "COM" + new string(portNames[i].Where(ch => char.IsDigit(ch)).ToArray());
+                if (portNames[i].Length > "COMxxx".Length)
+                {
+                    portNames[i] = portNames[i].Substring(0, "COMxxx".Length);
+                }
+            }
+            return portNames;
+        }
 
         /// <summary>
         /// Opens a new serial port communication.
@@ -98,7 +109,7 @@ namespace x_IMU_Camera_Control_via_PC
         /// <summary>
         /// Sends the gimbal to the home position (all servo angles at 0 degrees).
         /// </summary>
-        public void SendHome()
+        public void SetHome()
         {
             SetPan(0.0f);
             SetRoll(0.0f);
@@ -158,7 +169,5 @@ namespace x_IMU_Camera_Control_via_PC
             }
             catch { }
         }
-
-        #endregion
     }
 }
